@@ -1,0 +1,26 @@
+# Environments and secrets
+.env
+.env.*
+!.env.example
+
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+
+# Logs and databases
+*.log
+server.log
+server_err.log
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+desktop.ini

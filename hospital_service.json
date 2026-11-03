@@ -1,0 +1,1127 @@
+{
+  "chatbot_metadata": {
+    "name": "Hospital FAQ Chatbot Knowledge Base",
+    "version": "1.0.0",
+    "source_document": "hospital_services_and_faq_reference.docx",
+    "intended_use": "Conversational AI knowledge base for hospital website & messaging channels",
+    "system_prompt": "You are an official Hospital FAQ Assistant. Your role is to provide accurate, verified information about hospital services, clinic timetables, location, and contacts. Strictly follow these guardrails:\n1. NEVER give medical diagnoses, symptom assessments, or prescribe medications.\n2. In an emergency, immediately instruct the user to seek emergency care or call the verified emergency number.\n3. If any detail (hours, fees, doctor availability, appointment slots) is unverified or missing, state that you cannot confirm it from current approved records and refer them to official hospital contacts.\n4. Be compassionate, concise, and professional.",
+    "safety_guardrails": {
+      "medical_diagnosis_rule": "The assistant cannot diagnose illnesses or advise on medications. Always refer to a qualified medical clinician.",
+      "emergency_rule": "Direct users experiencing life-threatening symptoms to emergency services immediately.",
+      "unconfirmed_information_policy": "When a visitor asks about information that is missing, outdated, conflicting, or not approved, the chatbot must not guess. It should state that it cannot confirm the answer and direct the visitor to the hospital's verified contact channel.",
+      "approved_fallback_response": "“I’m unable to confirm that information from the hospital’s current approved information. Please contact the hospital directly for confirmation.”",
+      "unconfirmed_triggers": [
+        "Clinic day or opening time not listed in the approved schedule.",
+        "Service or specialist not included in the current service directory.",
+        "Unconfirmed consultation fees, test prices, or insurance arrangements.",
+        "Unverified phone numbers, addresses, or emergency contacts.",
+        "Conflicting clinic schedules or expired documents.",
+        "Availability of a doctor, medicine, test, bed, or appointment in real time."
+      ]
+    }
+  },
+  "hospital_profile": {
+    "hospital_name": "[Enter approved hospital name]",
+    "location": {
+      "hospital_name": "[Enter approved hospital name]",
+      "street_address": "[Enter verified street address]",
+      "town_city": "[Enter town or city]",
+      "state": "[Enter state]",
+      "landmarks_directions": "[Enter verified directions]",
+      "public_transport_parking_information": "[Enter if available]"
+    },
+    "contacts": {
+      "main_telephone": "07014678906",
+      "appointment_line": "[Enter number, if separate]",
+      "emergency_contact": "[Enter verified number and hours of operation]",
+      "email": "eleriuseastsunsam@gmail.com",
+      "website": "[Enter official website URL]",
+      "official_social_media_pages": "[Enter verified links, if used]",
+      "operational_note": "Do not invent contact details. Test all telephone numbers and links before publishing them. If no emergency number has been confirmed, the chatbot must not make one up."
+    }
+  },
+  "intents": [
+    {
+      "intent_name": "emergency_assistance",
+      "priority": "HIGH_SAFETY_CRITICAL",
+      "description": "Triggered when a user expresses an urgent medical crisis or life-threatening situation.",
+      "keywords": [
+        "emergency",
+        "urgent",
+        "chest pain",
+        "dying",
+        "heart attack",
+        "collapsed",
+        "bleeding",
+        "unconscious",
+        "ambulance"
+      ],
+      "action": "trigger_emergency_protocol",
+      "response_text": "If you or someone nearby is experiencing a medical emergency, please seek immediate emergency care. Call our emergency contact at [Enter verified number and hours of operation] or proceed immediately to the nearest Emergency Department. Do not wait for chatbot replies."
+    },
+    {
+      "intent_name": "medical_diagnosis_inquiry",
+      "priority": "HIGH_SAFETY_CRITICAL",
+      "description": "Triggered when a user asks for medical diagnosis, symptom checks, or prescriptions.",
+      "keywords": [
+        "diagnose",
+        "illness",
+        "symptoms",
+        "disease",
+        "medicine to take",
+        "prescription",
+        "cure",
+        "pain",
+        "fever"
+      ],
+      "action": "trigger_medical_disclaimer",
+      "response_text": "I cannot provide clinical diagnoses, interpret symptoms, or suggest medications. Please schedule an appointment or visit the General Outpatient Clinic to consult with a qualified physician."
+    },
+    {
+      "intent_name": "ask_services",
+      "priority": "STANDARD",
+      "description": "Triggered when a user asks what general services or facilities the hospital offers.",
+      "keywords": [
+        "services",
+        "treatment",
+        "facilities",
+        "what do you treat",
+        "care options"
+      ],
+      "action": "list_approved_services",
+      "response_text": "The hospital offers the following approved services: General outpatient consultations and assessment., Emergency assessment and stabilization, if the hospital operates an emergency unit., Inpatient admission and ward care, where available., Maternal health services, including antenatal and postnatal care, if offered., Child health and immunization services, according to the hospital's approved programme., Laboratory investigations listed in the hospital's service directory., Pharmacy services and dispensing of prescribed medicines, where available., Minor procedures and wound care, if provided., Health education and preventive-care services., Referral to specialist services or other facilities when a service is unavailable."
+    },
+    {
+      "intent_name": "ask_clinic_schedule",
+      "priority": "STANDARD",
+      "description": "Triggered when a user asks for clinic timetables, days, or hours.",
+      "keywords": [
+        "clinic days",
+        "schedule",
+        "when is clinic",
+        "opening hours",
+        "opening time",
+        "timetable"
+      ],
+      "action": "lookup_clinic_schedule",
+      "response_text": "Please specify the clinic or department name (e.g. Antenatal, Paediatric, Dental, Surgical, Outpatient) to check its timetable."
+    },
+    {
+      "intent_name": "ask_location",
+      "priority": "STANDARD",
+      "description": "Triggered when a user asks for address, directions, or parking.",
+      "keywords": [
+        "location",
+        "address",
+        "where are you",
+        "directions",
+        "landmarks",
+        "parking",
+        "bus",
+        "transport"
+      ],
+      "action": "provide_location_details",
+      "response_text": "Address: [Enter verified street address], [Enter town or city], [Enter state]. Directions: [Enter verified directions]."
+    },
+    {
+      "intent_name": "ask_contact",
+      "priority": "STANDARD",
+      "description": "Triggered when a user asks how to call, email, or reach the hospital.",
+      "keywords": [
+        "phone",
+        "call",
+        "telephone",
+        "email",
+        "contact",
+        "appointment desk",
+        "website",
+        "social media"
+      ],
+      "action": "provide_contact_channels",
+      "response_text": "Main Phone: 07014678906; Appointment Line: [Enter number, if separate]; Email: eleriuseastsunsam@gmail.com; Website: [Enter official website URL]."
+    },
+    {
+      "intent_name": "fallback_unconfirmed_information",
+      "priority": "FALLBACK",
+      "description": "Triggered when information is missing, unverified, contradictory, or unapproved.",
+      "keywords": [
+        "fees",
+        "cost",
+        "price",
+        "doctor availability today",
+        "bed availability",
+        "insurance package"
+      ],
+      "action": "fallback_safeguard",
+      "response_text": "“I’m unable to confirm that information from the hospital’s current approved information. Please contact the hospital directly for confirmation.”"
+    }
+  ],
+  "faq_knowledge_base": [
+    {
+      "id": "faq_hospital_services",
+      "category": "services",
+      "question": "What services does the hospital offer?",
+      "sample_user_queries": [
+        "What services do you offer?",
+        "What medical services are available?",
+        "What kind of treatments can I get here?",
+        "Do you do lab tests and surgery?"
+      ],
+      "approved_answer": "The hospital provides general outpatient consultations, emergency assessment and stabilization, inpatient ward care, maternal health (antenatal & postnatal care), child health and immunization, laboratory investigations, pharmacy dispensing, minor surgical procedures and wound care, health education, and specialist referrals.",
+      "answer_rule": "List only services present in the approved service directory.",
+      "intent": "ask_services"
+    },
+    {
+      "id": "faq_antenatal_clinic_days",
+      "category": "clinic_schedule",
+      "question": "Which days does the antenatal clinic hold?",
+      "sample_user_queries": [
+        "Which days does the antenatal clinic hold?",
+        "When is antenatal clinic open?",
+        "What days can pregnant women come for checkups?",
+        "Is antenatal clinic open on Monday?"
+      ],
+      "approved_answer": "The Antenatal Clinic operates on Tuesday and Thursday. (Please note: this is an example schedule for testing and should be confirmed with the hospital).",
+      "answer_rule": "Return the verified antenatal clinic days. If not confirmed, say so.",
+      "intent": "ask_clinic_days"
+    },
+    {
+      "id": "faq_paediatric_clinic_hours",
+      "category": "clinic_schedule",
+      "question": "What time does the paediatric clinic start?",
+      "sample_user_queries": [
+        "What time does the paediatric clinic start?",
+        "What are the opening hours for children clinic?",
+        "When can I bring my child to the clinic?",
+        "What time does pediatrics open?"
+      ],
+      "approved_answer": "Operating hours for the Paediatric Clinic are currently not confirmed in our system. Please contact the hospital directly to confirm start and closing times.",
+      "answer_rule": "Return verified hours. If missing, direct the visitor to the hospital.",
+      "intent": "ask_clinic_hours"
+    },
+    {
+      "id": "faq_dental_unit_availability",
+      "category": "departments",
+      "question": "Does the hospital have a dental unit?",
+      "sample_user_queries": [
+        "Does the hospital have a dental unit?",
+        "Do you have a dentist?",
+        "Can I get dental treatment here?",
+        "Is there a dental clinic available?"
+      ],
+      "approved_answer": "Yes, the hospital directory includes a Dental Unit for dental assessment and procedures. The clinic day is listed as Friday (example schedule; subject to hospital confirmation).",
+      "answer_rule": "Answer yes only if the unit is confirmed in the approved directory.",
+      "intent": "check_service_availability"
+    },
+    {
+      "id": "faq_hospital_location",
+      "category": "location",
+      "question": "Where is the hospital located?",
+      "sample_user_queries": [
+        "Where is the hospital located?",
+        "What is your address?",
+        "How do I get to the hospital?",
+        "Where are you situated?",
+        "Can you give me directions?"
+      ],
+      "approved_answer": "The hospital is located at [Enter verified street address], [Enter town or city], [Enter state]. Landmarks & directions: [Enter verified directions]. Public transport & parking: [Enter if available]",
+      "answer_rule": "Use the verified address and approved directions.",
+      "intent": "ask_location"
+    },
+    {
+      "id": "faq_contact_hospital",
+      "category": "contact",
+      "question": "How can I contact the hospital?",
+      "sample_user_queries": [
+        "How can I contact the hospital?",
+        "What is your phone number?",
+        "What is the hospital's email address?",
+        "How do I reach the appointment desk?"
+      ],
+      "approved_answer": "You can contact the hospital via: Main Telephone: 07014678906; Appointment Line: [Enter number, if separate]; Email: eleriuseastsunsam@gmail.com; Website: [Enter official website URL]. For urgent medical emergencies, call [Enter verified number and hours of operation].",
+      "answer_rule": "Provide only verified contact details.",
+      "intent": "ask_contact"
+    },
+    {
+      "id": "faq_medical_diagnosis_disclaimer",
+      "category": "safety_disclaimer",
+      "question": "Can you tell me what illness I have?",
+      "sample_user_queries": [
+        "Can you tell me what illness I have?",
+        "What is wrong with me?",
+        "I have stomach pain and headache, what disease is it?",
+        "Can you prescribe medication for my cough?",
+        "Diagnose my symptoms"
+      ],
+      "approved_answer": "I am an automated hospital assistant and cannot provide medical diagnoses, interpret symptoms, or prescribe treatments. Please consult a qualified doctor or healthcare professional at our hospital for personal medical evaluation.",
+      "answer_rule": "Explain that the FAQ assistant cannot diagnose and advise contacting a qualified clinician.",
+      "intent": "medical_diagnosis_inquiry"
+    },
+    {
+      "id": "faq_medical_emergency_guidance",
+      "category": "emergency",
+      "question": "I may be having a medical emergency. What should I do?",
+      "sample_user_queries": [
+        "I may be having a medical emergency. What should I do?",
+        "I am having severe chest pain!",
+        "Help, someone collapsed!",
+        "Heavy bleeding, what do I do?",
+        "Emergency!"
+      ],
+      "approved_answer": "If you or someone nearby is experiencing a medical emergency, seek immediate emergency medical care. Contact the hospital emergency line at [Enter verified number and hours of operation] or proceed directly to the nearest Emergency Department. Do not rely on an online chatbot for emergency situations.",
+      "answer_rule": "Display the hospital-approved emergency instruction and verified contact details; do not attempt AI diagnosis.",
+      "intent": "emergency_assistance"
+    }
+  ],
+  "departments_and_clinics": [
+    {
+      "id": "general_outpatient_clinic",
+      "name": "General Outpatient Clinic",
+      "department": "General Outpatient / Family Medicine",
+      "aliases": [
+        "gopd",
+        "outpatient clinic",
+        "general consultation",
+        "family medicine clinic"
+      ],
+      "services": "General consultations, assessment of common health concerns, follow-up visits, and referral when needed.",
+      "clinic_days": "Monday–Friday (example only)",
+      "clinic_hours": "Not confirmed",
+      "schedule_status": {
+        "days_confirmed": false,
+        "hours_confirmed": false,
+        "requires_verification": true
+      },
+      "chatbot_summary": "General Outpatient Clinic (General Outpatient / Family Medicine): Provides General consultations, assessment of common health concerns, follow-up visits, and referral when needed. Clinic schedule is Monday–Friday (example only), and hours are currently Not confirmed."
+    },
+    {
+      "id": "antenatal_clinic",
+      "name": "Antenatal Clinic",
+      "department": "Obstetrics and Gynaecology",
+      "aliases": [
+        "anc",
+        "prenatal clinic",
+        "maternity clinic",
+        "pregnancy care",
+        "obstetrics clinic"
+      ],
+      "services": "Pregnancy-related care, antenatal services, and maternal monitoring.",
+      "clinic_days": "Tuesday and Thursday (example only)",
+      "clinic_hours": "Not confirmed",
+      "schedule_status": {
+        "days_confirmed": false,
+        "hours_confirmed": false,
+        "requires_verification": true
+      },
+      "chatbot_summary": "Antenatal Clinic (Obstetrics and Gynaecology): Provides Pregnancy-related care, antenatal services, and maternal monitoring. Clinic schedule is Tuesday and Thursday (example only), and hours are currently Not confirmed."
+    },
+    {
+      "id": "postnatal_clinic",
+      "name": "Postnatal Clinic",
+      "department": "Obstetrics and Gynaecology",
+      "aliases": [
+        "pnc",
+        "postpartum clinic",
+        "post-delivery checkup",
+        "new mother clinic"
+      ],
+      "services": "Postnatal checkup and postpartum maternal care.",
+      "clinic_days": "Wednesday (example only)",
+      "clinic_hours": "Not confirmed",
+      "schedule_status": {
+        "days_confirmed": false,
+        "hours_confirmed": false,
+        "requires_verification": true
+      },
+      "chatbot_summary": "Postnatal Clinic (Obstetrics and Gynaecology): Provides Postnatal checkup and postpartum maternal care. Clinic schedule is Wednesday (example only), and hours are currently Not confirmed."
+    },
+    {
+      "id": "paediatric_clinic",
+      "name": "Paediatric Clinic",
+      "department": "Paediatrics",
+      "aliases": [
+        "children clinic",
+        "pediatrician",
+        "infant care",
+        "kids clinic"
+      ],
+      "services": "Assessment and care of infants, children, and adolescents.",
+      "clinic_days": "Wednesday (example only)",
+      "clinic_hours": "Not confirmed",
+      "schedule_status": {
+        "days_confirmed": false,
+        "hours_confirmed": false,
+        "requires_verification": true
+      },
+      "chatbot_summary": "Paediatric Clinic (Paediatrics): Provides Assessment and care of infants, children, and adolescents. Clinic schedule is Wednesday (example only), and hours are currently Not confirmed."
+    },
+    {
+      "id": "immunization_child_welfare_clinic",
+      "name": "Immunization / Child Welfare Clinic",
+      "department": "Immunization / Child Welfare",
+      "aliases": [
+        "vaccination clinic",
+        "vaccine clinic",
+        "baby clinic",
+        "immunisation",
+        "child welfare"
+      ],
+      "services": "Vaccination and child-welfare services according to the approved schedule and stock availability.",
+      "clinic_days": "Friday (example only)",
+      "clinic_hours": "Not confirmed",
+      "schedule_status": {
+        "days_confirmed": false,
+        "hours_confirmed": false,
+        "requires_verification": true
+      },
+      "chatbot_summary": "Immunization / Child Welfare Clinic (Immunization / Child Welfare): Provides Vaccination and child-welfare services according to the approved schedule and stock availability. Clinic schedule is Friday (example only), and hours are currently Not confirmed."
+    },
+    {
+      "id": "dental_clinic",
+      "name": "Dental Clinic",
+      "department": "Dental Unit",
+      "aliases": [
+        "dentist",
+        "teeth",
+        "dental care",
+        "oral health clinic"
+      ],
+      "services": "Dental assessment and procedures only if confirmed available by the hospital.",
+      "clinic_days": "Friday (example only)",
+      "clinic_hours": "Not confirmed",
+      "schedule_status": {
+        "days_confirmed": false,
+        "hours_confirmed": false,
+        "requires_verification": true
+      },
+      "chatbot_summary": "Dental Clinic (Dental Unit): Provides Dental assessment and procedures only if confirmed available by the hospital. Clinic schedule is Friday (example only), and hours are currently Not confirmed."
+    },
+    {
+      "id": "surgical_clinic",
+      "name": "Surgical Clinic",
+      "department": "Surgical Services",
+      "aliases": [
+        "surgery clinic",
+        "surgeon consultation",
+        "operation clinic"
+      ],
+      "services": "Surgical consultations and pre/post-operative evaluation within hospital capacity.",
+      "clinic_days": "Monday (example only)",
+      "clinic_hours": "Not confirmed",
+      "schedule_status": {
+        "days_confirmed": false,
+        "hours_confirmed": false,
+        "requires_verification": true
+      },
+      "chatbot_summary": "Surgical Clinic (Surgical Services): Provides Surgical consultations and pre/post-operative evaluation within hospital capacity. Clinic schedule is Monday (example only), and hours are currently Not confirmed."
+    },
+    {
+      "id": "medical_specialist_clinic",
+      "name": "Medical / Specialist Clinic",
+      "department": "Medical / Specialist Clinics",
+      "aliases": [
+        "specialist clinic",
+        "internal medicine",
+        "physician clinic",
+        "consultant clinic"
+      ],
+      "services": "Specialist consultations only for specialties confirmed by the hospital.",
+      "clinic_days": "By appointment; days to be confirmed",
+      "clinic_hours": "Not confirmed",
+      "schedule_status": {
+        "days_confirmed": false,
+        "hours_confirmed": false,
+        "requires_verification": true
+      },
+      "chatbot_summary": "Medical / Specialist Clinic (Medical / Specialist Clinics): Provides Specialist consultations only for specialties confirmed by the hospital. Clinic schedule is By appointment; days to be confirmed, and hours are currently Not confirmed."
+    },
+    {
+      "id": "family_planning_clinic",
+      "name": "Family Planning Clinic",
+      "department": "Obstetrics and Gynaecology",
+      "aliases": [
+        "contraception clinic",
+        "birth control",
+        "reproductive health"
+      ],
+      "services": "Family planning counselling and approved contraceptive services.",
+      "clinic_days": "Thursday (example only)",
+      "clinic_hours": "Not confirmed",
+      "schedule_status": {
+        "days_confirmed": false,
+        "hours_confirmed": false,
+        "requires_verification": true
+      },
+      "chatbot_summary": "Family Planning Clinic (Obstetrics and Gynaecology): Provides Family planning counselling and approved contraceptive services. Clinic schedule is Thursday (example only), and hours are currently Not confirmed."
+    },
+    {
+      "id": "diabetes_hypertension_clinic",
+      "name": "Diabetes / Hypertension Clinic",
+      "department": "Medical / Specialist Clinics",
+      "aliases": [
+        "sugar clinic",
+        "bp clinic",
+        "hypertension clinic",
+        "chronic care clinic",
+        "diabetic clinic"
+      ],
+      "services": "Specialized chronic disease monitoring, blood pressure and blood sugar management.",
+      "clinic_days": "By appointment; days to be confirmed",
+      "clinic_hours": "Not confirmed",
+      "schedule_status": {
+        "days_confirmed": false,
+        "hours_confirmed": false,
+        "requires_verification": true
+      },
+      "chatbot_summary": "Diabetes / Hypertension Clinic (Medical / Specialist Clinics): Provides Specialized chronic disease monitoring, blood pressure and blood sugar management. Clinic schedule is By appointment; days to be confirmed, and hours are currently Not confirmed."
+    },
+    {
+      "id": "emergency_unit",
+      "name": "Emergency Unit",
+      "department": "Emergency Services",
+      "aliases": [
+        "er",
+        "a&e",
+        "accident and emergency",
+        "urgent care",
+        "casualty"
+      ],
+      "services": "Emergency assessment, stabilization, and immediate acute medical care.",
+      "clinic_days": "By appointment / To be confirmed",
+      "clinic_hours": "Not confirmed — verify whether the service operates 24/7",
+      "schedule_status": {
+        "days_confirmed": false,
+        "hours_confirmed": false,
+        "requires_verification": true
+      },
+      "chatbot_summary": "Emergency Unit (Emergency Services): Provides Emergency assessment, stabilization, and immediate acute medical care. Clinic schedule is By appointment / To be confirmed, and hours are currently Not confirmed — verify whether the service operates 24/7."
+    },
+    {
+      "id": "laboratory_services",
+      "name": "Laboratory Services",
+      "department": "Laboratory Services",
+      "aliases": [
+        "laboratory services"
+      ],
+      "services": "Approved laboratory tests and specimen collection. Specific tests and turnaround times must be confirmed.",
+      "clinic_days": "Operating according to hospital schedule",
+      "clinic_hours": "Operating during hospital business hours (to be confirmed)",
+      "schedule_status": {
+        "days_confirmed": false,
+        "hours_confirmed": false,
+        "requires_verification": true
+      },
+      "chatbot_summary": "Laboratory Services: Provides Approved laboratory tests and specimen collection. Specific tests and turnaround times must be confirmed."
+    },
+    {
+      "id": "pharmacy",
+      "name": "Pharmacy",
+      "department": "Pharmacy",
+      "aliases": [
+        "pharmacy"
+      ],
+      "services": "Dispensing and counselling related to medicines prescribed or supplied under hospital policy.",
+      "clinic_days": "Operating according to hospital schedule",
+      "clinic_hours": "Operating during hospital business hours (to be confirmed)",
+      "schedule_status": {
+        "days_confirmed": false,
+        "hours_confirmed": false,
+        "requires_verification": true
+      },
+      "chatbot_summary": "Pharmacy: Provides Dispensing and counselling related to medicines prescribed or supplied under hospital policy."
+    },
+    {
+      "id": "radiology_imaging",
+      "name": "Radiology / Imaging",
+      "department": "Radiology / Imaging",
+      "aliases": [
+        "radiology / imaging"
+      ],
+      "services": "Imaging services such as X-ray or ultrasound only where available and confirmed.",
+      "clinic_days": "Operating according to hospital schedule",
+      "clinic_hours": "Operating during hospital business hours (to be confirmed)",
+      "schedule_status": {
+        "days_confirmed": false,
+        "hours_confirmed": false,
+        "requires_verification": true
+      },
+      "chatbot_summary": "Radiology / Imaging: Provides Imaging services such as X-ray or ultrasound only where available and confirmed."
+    }
+  ],
+  "general_services": [
+    "General outpatient consultations and assessment.",
+    "Emergency assessment and stabilization, if the hospital operates an emergency unit.",
+    "Inpatient admission and ward care, where available.",
+    "Maternal health services, including antenatal and postnatal care, if offered.",
+    "Child health and immunization services, according to the hospital's approved programme.",
+    "Laboratory investigations listed in the hospital's service directory.",
+    "Pharmacy services and dispensing of prescribed medicines, where available.",
+    "Minor procedures and wound care, if provided.",
+    "Health education and preventive-care services.",
+    "Referral to specialist services or other facilities when a service is unavailable."
+  ],
+  "retrieval_knowledge_chunks": [
+    {
+      "chunk_id": "chunk_001",
+      "category": "services",
+      "title": "Hospital Overview and General Services",
+      "keywords": [
+        "general services",
+        "outpatient",
+        "emergency",
+        "inpatient",
+        "maternal",
+        "pharmacy",
+        "lab"
+      ],
+      "content": "Hospital Overview: The hospital provides comprehensive healthcare services including: General outpatient consultations and assessment.; Emergency assessment and stabilization, if the hospital operates an emergency unit.; Inpatient admission and ward care, where available.; Maternal health services, including antenatal and postnatal care, if offered.; Child health and immunization services, according to the hospital's approved programme.; Laboratory investigations listed in the hospital's service directory.; Pharmacy services and dispensing of prescribed medicines, where available.; Minor procedures and wound care, if provided.; Health education and preventive-care services.; Referral to specialist services or other facilities when a service is unavailable."
+    },
+    {
+      "chunk_id": "chunk_002",
+      "category": "clinic_timetable",
+      "title": "Clinic Timetable: General Outpatient Clinic",
+      "keywords": [
+        "gopd",
+        "outpatient clinic",
+        "general consultation",
+        "family medicine clinic",
+        "general outpatient clinic",
+        "general outpatient / family medicine"
+      ],
+      "content": "Unit: General Outpatient Clinic. Department: General Outpatient / Family Medicine. Scope of Services: General consultations, assessment of common health concerns, follow-up visits, and referral when needed.. Clinic Days: Monday–Friday (example only). Operating Hours: Not confirmed. Verification Note: Days confirmed: False, Hours confirmed: False."
+    },
+    {
+      "chunk_id": "chunk_003",
+      "category": "clinic_timetable",
+      "title": "Clinic Timetable: Antenatal Clinic",
+      "keywords": [
+        "anc",
+        "prenatal clinic",
+        "maternity clinic",
+        "pregnancy care",
+        "obstetrics clinic",
+        "antenatal clinic",
+        "obstetrics and gynaecology"
+      ],
+      "content": "Unit: Antenatal Clinic. Department: Obstetrics and Gynaecology. Scope of Services: Pregnancy-related care, antenatal services, and maternal monitoring.. Clinic Days: Tuesday and Thursday (example only). Operating Hours: Not confirmed. Verification Note: Days confirmed: False, Hours confirmed: False."
+    },
+    {
+      "chunk_id": "chunk_004",
+      "category": "clinic_timetable",
+      "title": "Clinic Timetable: Postnatal Clinic",
+      "keywords": [
+        "pnc",
+        "postpartum clinic",
+        "post-delivery checkup",
+        "new mother clinic",
+        "postnatal clinic",
+        "obstetrics and gynaecology"
+      ],
+      "content": "Unit: Postnatal Clinic. Department: Obstetrics and Gynaecology. Scope of Services: Postnatal checkup and postpartum maternal care.. Clinic Days: Wednesday (example only). Operating Hours: Not confirmed. Verification Note: Days confirmed: False, Hours confirmed: False."
+    },
+    {
+      "chunk_id": "chunk_005",
+      "category": "clinic_timetable",
+      "title": "Clinic Timetable: Paediatric Clinic",
+      "keywords": [
+        "children clinic",
+        "pediatrician",
+        "infant care",
+        "kids clinic",
+        "paediatric clinic",
+        "paediatrics"
+      ],
+      "content": "Unit: Paediatric Clinic. Department: Paediatrics. Scope of Services: Assessment and care of infants, children, and adolescents.. Clinic Days: Wednesday (example only). Operating Hours: Not confirmed. Verification Note: Days confirmed: False, Hours confirmed: False."
+    },
+    {
+      "chunk_id": "chunk_006",
+      "category": "clinic_timetable",
+      "title": "Clinic Timetable: Immunization / Child Welfare Clinic",
+      "keywords": [
+        "vaccination clinic",
+        "vaccine clinic",
+        "baby clinic",
+        "immunisation",
+        "child welfare",
+        "immunization / child welfare clinic",
+        "immunization / child welfare"
+      ],
+      "content": "Unit: Immunization / Child Welfare Clinic. Department: Immunization / Child Welfare. Scope of Services: Vaccination and child-welfare services according to the approved schedule and stock availability.. Clinic Days: Friday (example only). Operating Hours: Not confirmed. Verification Note: Days confirmed: False, Hours confirmed: False."
+    },
+    {
+      "chunk_id": "chunk_007",
+      "category": "clinic_timetable",
+      "title": "Clinic Timetable: Dental Clinic",
+      "keywords": [
+        "dentist",
+        "teeth",
+        "dental care",
+        "oral health clinic",
+        "dental clinic",
+        "dental unit"
+      ],
+      "content": "Unit: Dental Clinic. Department: Dental Unit. Scope of Services: Dental assessment and procedures only if confirmed available by the hospital.. Clinic Days: Friday (example only). Operating Hours: Not confirmed. Verification Note: Days confirmed: False, Hours confirmed: False."
+    },
+    {
+      "chunk_id": "chunk_008",
+      "category": "clinic_timetable",
+      "title": "Clinic Timetable: Surgical Clinic",
+      "keywords": [
+        "surgery clinic",
+        "surgeon consultation",
+        "operation clinic",
+        "surgical clinic",
+        "surgical services"
+      ],
+      "content": "Unit: Surgical Clinic. Department: Surgical Services. Scope of Services: Surgical consultations and pre/post-operative evaluation within hospital capacity.. Clinic Days: Monday (example only). Operating Hours: Not confirmed. Verification Note: Days confirmed: False, Hours confirmed: False."
+    },
+    {
+      "chunk_id": "chunk_009",
+      "category": "clinic_timetable",
+      "title": "Clinic Timetable: Medical / Specialist Clinic",
+      "keywords": [
+        "specialist clinic",
+        "internal medicine",
+        "physician clinic",
+        "consultant clinic",
+        "medical / specialist clinic",
+        "medical / specialist clinics"
+      ],
+      "content": "Unit: Medical / Specialist Clinic. Department: Medical / Specialist Clinics. Scope of Services: Specialist consultations only for specialties confirmed by the hospital.. Clinic Days: By appointment; days to be confirmed. Operating Hours: Not confirmed. Verification Note: Days confirmed: False, Hours confirmed: False."
+    },
+    {
+      "chunk_id": "chunk_010",
+      "category": "clinic_timetable",
+      "title": "Clinic Timetable: Family Planning Clinic",
+      "keywords": [
+        "contraception clinic",
+        "birth control",
+        "reproductive health",
+        "family planning clinic",
+        "obstetrics and gynaecology"
+      ],
+      "content": "Unit: Family Planning Clinic. Department: Obstetrics and Gynaecology. Scope of Services: Family planning counselling and approved contraceptive services.. Clinic Days: Thursday (example only). Operating Hours: Not confirmed. Verification Note: Days confirmed: False, Hours confirmed: False."
+    },
+    {
+      "chunk_id": "chunk_011",
+      "category": "clinic_timetable",
+      "title": "Clinic Timetable: Diabetes / Hypertension Clinic",
+      "keywords": [
+        "sugar clinic",
+        "bp clinic",
+        "hypertension clinic",
+        "chronic care clinic",
+        "diabetic clinic",
+        "diabetes / hypertension clinic",
+        "medical / specialist clinics"
+      ],
+      "content": "Unit: Diabetes / Hypertension Clinic. Department: Medical / Specialist Clinics. Scope of Services: Specialized chronic disease monitoring, blood pressure and blood sugar management.. Clinic Days: By appointment; days to be confirmed. Operating Hours: Not confirmed. Verification Note: Days confirmed: False, Hours confirmed: False."
+    },
+    {
+      "chunk_id": "chunk_012",
+      "category": "clinic_timetable",
+      "title": "Clinic Timetable: Emergency Unit",
+      "keywords": [
+        "er",
+        "a&e",
+        "accident and emergency",
+        "urgent care",
+        "casualty",
+        "emergency unit",
+        "emergency services"
+      ],
+      "content": "Unit: Emergency Unit. Department: Emergency Services. Scope of Services: Emergency assessment, stabilization, and immediate acute medical care.. Clinic Days: By appointment / To be confirmed. Operating Hours: Not confirmed — verify whether the service operates 24/7. Verification Note: Days confirmed: False, Hours confirmed: False."
+    },
+    {
+      "chunk_id": "chunk_013",
+      "category": "clinic_timetable",
+      "title": "Clinic Timetable: Laboratory Services",
+      "keywords": [
+        "laboratory services",
+        "laboratory services",
+        "laboratory services"
+      ],
+      "content": "Unit: Laboratory Services. Department: Laboratory Services. Scope of Services: Approved laboratory tests and specimen collection. Specific tests and turnaround times must be confirmed.. Clinic Days: Operating according to hospital schedule. Operating Hours: Operating during hospital business hours (to be confirmed). Verification Note: Days confirmed: False, Hours confirmed: False."
+    },
+    {
+      "chunk_id": "chunk_014",
+      "category": "clinic_timetable",
+      "title": "Clinic Timetable: Pharmacy",
+      "keywords": [
+        "pharmacy",
+        "pharmacy",
+        "pharmacy"
+      ],
+      "content": "Unit: Pharmacy. Department: Pharmacy. Scope of Services: Dispensing and counselling related to medicines prescribed or supplied under hospital policy.. Clinic Days: Operating according to hospital schedule. Operating Hours: Operating during hospital business hours (to be confirmed). Verification Note: Days confirmed: False, Hours confirmed: False."
+    },
+    {
+      "chunk_id": "chunk_015",
+      "category": "clinic_timetable",
+      "title": "Clinic Timetable: Radiology / Imaging",
+      "keywords": [
+        "radiology / imaging",
+        "radiology / imaging",
+        "radiology / imaging"
+      ],
+      "content": "Unit: Radiology / Imaging. Department: Radiology / Imaging. Scope of Services: Imaging services such as X-ray or ultrasound only where available and confirmed.. Clinic Days: Operating according to hospital schedule. Operating Hours: Operating during hospital business hours (to be confirmed). Verification Note: Days confirmed: False, Hours confirmed: False."
+    },
+    {
+      "chunk_id": "chunk_016",
+      "category": "location",
+      "title": "Hospital Location and Directions",
+      "keywords": [
+        "location",
+        "address",
+        "landmarks",
+        "directions",
+        "parking",
+        "public transport"
+      ],
+      "content": "Hospital Name: [Enter approved hospital name]. Street Address: [Enter verified street address]. City/Town: [Enter town or city], State: [Enter state]. Directions and Landmarks: [Enter verified directions]. Public Transport and Parking: [Enter if available]."
+    },
+    {
+      "chunk_id": "chunk_017",
+      "category": "contact",
+      "title": "Contact Details and Appointment Booking",
+      "keywords": [
+        "contact",
+        "phone number",
+        "emergency phone",
+        "email",
+        "appointment line",
+        "website"
+      ],
+      "content": "Main Telephone: 07014678906. Appointment Booking Line: [Enter number, if separate]. Emergency Contact: [Enter verified number and hours of operation]. Official Email: eleriuseastsunsam@gmail.com. Official Website: [Enter official website URL]. Social Media: [Enter verified links, if used]."
+    },
+    {
+      "chunk_id": "chunk_018",
+      "category": "safety",
+      "title": "Medical Emergency and Diagnosis Disclaimer Protocol",
+      "keywords": [
+        "emergency",
+        "chest pain",
+        "critical",
+        "diagnose",
+        "medical advice"
+      ],
+      "content": "Safety Protocol: The chatbot does not provide medical diagnoses or symptom assessments. In case of medical emergencies, visitors must immediately call emergency numbers or visit the emergency unit. The bot must never guess doctor availability, bed counts, or consultation prices."
+    }
+  ],
+  "operational_governance": {
+    "maintenance_rules": [
+      "A designated hospital staff member must approve the service directory and clinic timetable.",
+      "Record the date each schedule was last reviewed and who approved it.",
+      "Update the knowledge base whenever clinic days, hours, services, or contacts change.",
+      "Remove or archive superseded documents so old information cannot be retrieved.",
+      "Test common questions after every update.",
+      "Do not include patient records or confidential internal documents in the public FAQ knowledge base."
+    ],
+    "pre_launch_approval_checklist": [
+      "Hospital name and services verified.",
+      "Every department and clinic day verified.",
+      "Clinic hours and holiday arrangements verified.",
+      "Address, phone numbers, email, and website tested.",
+      "Unknown-answer response approved.",
+      "Emergency response wording and contacts approved.",
+      "Privacy notice and data handling reviewed.",
+      "Hospital representative has tested and signed off the chatbot information."
+    ]
+  },
+  "document_reference": {
+    "preamble": {
+      "title": "HOSPITAL SERVICES & FAQ REFERENCE",
+      "subtitle": "Sample knowledge-base document for a hospital website chatbot",
+      "disclaimer": "IMPORTANT — SAMPLE DATA ONLY. This document contains illustrative hospital information generated for chatbot development. It does not describe a verified real hospital. Replace or confirm every service, department, clinic day, opening hour, address, and contact detail with information approved by the hospital before using it with the public. Example schedules below must not be treated as actual clinic schedules."
+    },
+    "sections": [
+      {
+        "section_number": 1,
+        "section_title": "General Hospital Services",
+        "heading": "1. General Hospital Services",
+        "description": "The following is a sample list of general services that a hospital may provide. Keep only the services confirmed by the hospital.",
+        "bullets": [
+          "General outpatient consultations and assessment.",
+          "Emergency assessment and stabilization, if the hospital operates an emergency unit.",
+          "Inpatient admission and ward care, where available.",
+          "Maternal health services, including antenatal and postnatal care, if offered.",
+          "Child health and immunization services, according to the hospital's approved programme.",
+          "Laboratory investigations listed in the hospital's service directory.",
+          "Pharmacy services and dispensing of prescribed medicines, where available.",
+          "Minor procedures and wound care, if provided.",
+          "Health education and preventive-care services.",
+          "Referral to specialist services or other facilities when a service is unavailable."
+        ],
+        "tables": []
+      },
+      {
+        "section_number": 2,
+        "section_title": "Department Services",
+        "heading": "2. Department Services",
+        "description": "Illustrative department directory. Confirm the names, availability, and scope of each unit.",
+        "bullets": [],
+        "tables": [
+          [
+            {
+              "department_unit": "General Outpatient / Family Medicine",
+              "sample_services": "General consultations, assessment of common health concerns, follow-up visits, and referral when needed."
+            },
+            {
+              "department_unit": "Obstetrics and Gynaecology",
+              "sample_services": "Pregnancy-related care, antenatal and postnatal services, and gynaecological consultations, if offered."
+            },
+            {
+              "department_unit": "Paediatrics",
+              "sample_services": "Assessment and care of infants, children, and adolescents, subject to the hospital's service scope."
+            },
+            {
+              "department_unit": "Laboratory Services",
+              "sample_services": "Approved laboratory tests and specimen collection. Specific tests and turnaround times must be confirmed."
+            },
+            {
+              "department_unit": "Pharmacy",
+              "sample_services": "Dispensing and counselling related to medicines prescribed or supplied under hospital policy."
+            },
+            {
+              "department_unit": "Dental Unit",
+              "sample_services": "Dental assessment and procedures only if the hospital confirms this unit is available."
+            },
+            {
+              "department_unit": "Surgical Services",
+              "sample_services": "Surgical consultations and procedures within the hospital's staffing and facility capacity."
+            },
+            {
+              "department_unit": "Medical / Specialist Clinics",
+              "sample_services": "Specialist consultations only for specialties confirmed by the hospital."
+            },
+            {
+              "department_unit": "Radiology / Imaging",
+              "sample_services": "Imaging services such as X-ray or ultrasound only where available and confirmed."
+            },
+            {
+              "department_unit": "Immunization / Child Welfare",
+              "sample_services": "Vaccination and child-welfare services according to the approved schedule and stock availability."
+            }
+          ]
+        ]
+      },
+      {
+        "section_number": 3,
+        "section_title": "Clinic Days",
+        "heading": "3. Clinic Days",
+        "description": "Example schedule for software testing only. These days are fictional placeholders and must be replaced by the hospital's approved clinic timetable.",
+        "bullets": [],
+        "tables": [
+          [
+            {
+              "clinic": "General Outpatient Clinic",
+              "clinic_day": "Monday–Friday (example only)"
+            },
+            {
+              "clinic": "Antenatal Clinic",
+              "clinic_day": "Tuesday and Thursday (example only)"
+            },
+            {
+              "clinic": "Postnatal Clinic",
+              "clinic_day": "Wednesday (example only)"
+            },
+            {
+              "clinic": "Paediatric Clinic",
+              "clinic_day": "Wednesday (example only)"
+            },
+            {
+              "clinic": "Immunization / Child Welfare Clinic",
+              "clinic_day": "Friday (example only)"
+            },
+            {
+              "clinic": "Dental Clinic",
+              "clinic_day": "Friday (example only)"
+            },
+            {
+              "clinic": "Surgical Clinic",
+              "clinic_day": "Monday (example only)"
+            },
+            {
+              "clinic": "Medical / Specialist Clinic",
+              "clinic_day": "By appointment; days to be confirmed"
+            },
+            {
+              "clinic": "Family Planning Clinic",
+              "clinic_day": "Thursday (example only)"
+            },
+            {
+              "clinic": "Diabetes / Hypertension Clinic",
+              "clinic_day": "By appointment; days to be confirmed"
+            }
+          ]
+        ]
+      },
+      {
+        "section_number": 4,
+        "section_title": "Clinic Hours",
+        "heading": "4. Clinic Hours",
+        "description": "Do not publish hours until they have been confirmed. Use the following template to record approved hours.",
+        "bullets": [],
+        "tables": [
+          [
+            {
+              "unit": "General Outpatient Clinic",
+              "hours": "Not confirmed"
+            },
+            {
+              "unit": "Antenatal Clinic",
+              "hours": "Not confirmed"
+            },
+            {
+              "unit": "Postnatal Clinic",
+              "hours": "Not confirmed"
+            },
+            {
+              "unit": "Paediatric Clinic",
+              "hours": "Not confirmed"
+            },
+            {
+              "unit": "Immunization / Child Welfare Clinic",
+              "hours": "Not confirmed"
+            },
+            {
+              "unit": "Dental Clinic",
+              "hours": "Not confirmed"
+            },
+            {
+              "unit": "Surgical Clinic",
+              "hours": "Not confirmed"
+            },
+            {
+              "unit": "Medical / Specialist Clinic",
+              "hours": "Not confirmed"
+            },
+            {
+              "unit": "Emergency Unit",
+              "hours": "Not confirmed — verify whether the service operates 24/7"
+            }
+          ]
+        ]
+      },
+      {
+        "section_number": 5,
+        "section_title": "Hospital Location",
+        "heading": "5. Hospital Location",
+        "description": "",
+        "bullets": [
+          "Hospital name: [Enter approved hospital name]",
+          "Street address: [Enter verified street address]",
+          "Town / City: [Enter town or city]",
+          "State: [Enter state]",
+          "Landmarks / directions: [Enter verified directions]",
+          "Public transport / parking information: [Enter if available]"
+        ],
+        "tables": []
+      },
+      {
+        "section_number": 6,
+        "section_title": "Contact Information",
+        "heading": "6. Contact Information",
+        "description": "Do not invent contact details. Test all telephone numbers and links before publishing them. If no emergency number has been confirmed, the chatbot must not make one up.",
+        "bullets": [
+          "Main telephone: 07014678906",
+          "Appointment line: [Enter number, if separate]",
+          "Emergency contact: [Enter verified number and hours of operation]",
+          "Email: eleriuseastsunsam@gmail.com",
+          "Website: [Enter official website URL]",
+          "Official social media pages: [Enter verified links, if used]"
+        ],
+        "tables": []
+      },
+      {
+        "section_number": 7,
+        "section_title": "Unknown or Unconfirmed Information",
+        "heading": "7. Unknown or Unconfirmed Information",
+        "description": "When a visitor asks about information that is missing, outdated, conflicting, or not approved, the chatbot must not guess. It should state that it cannot confirm the answer and direct the visitor to the hospital's verified contact channel. Suggested chatbot response: “I’m unable to confirm that information from the hospital’s current approved information. Please contact the hospital directly for confirmation.” Examples of information that must be treated as unknown until verified:",
+        "bullets": [
+          "Clinic day or opening time not listed in the approved schedule.",
+          "Service or specialist not included in the current service directory.",
+          "Unconfirmed consultation fees, test prices, or insurance arrangements.",
+          "Unverified phone numbers, addresses, or emergency contacts.",
+          "Conflicting clinic schedules or expired documents.",
+          "Availability of a doctor, medicine, test, bed, or appointment in real time."
+        ],
+        "tables": []
+      },
+      {
+        "section_number": 8,
+        "section_title": "Sample FAQ Questions and Approved Answer Patterns",
+        "heading": "8. Sample FAQ Questions and Approved Answer Patterns",
+        "description": "",
+        "bullets": [],
+        "tables": [
+          [
+            {
+              "visitor_question": "What services does the hospital offer?",
+              "answer_rule": "List only services present in the approved service directory."
+            },
+            {
+              "visitor_question": "Which days does the antenatal clinic hold?",
+              "answer_rule": "Return the verified antenatal clinic days. If not confirmed, say so."
+            },
+            {
+              "visitor_question": "What time does the paediatric clinic start?",
+              "answer_rule": "Return verified hours. If missing, direct the visitor to the hospital."
+            },
+            {
+              "visitor_question": "Does the hospital have a dental unit?",
+              "answer_rule": "Answer yes only if the unit is confirmed in the approved directory."
+            },
+            {
+              "visitor_question": "Where is the hospital located?",
+              "answer_rule": "Use the verified address and approved directions."
+            },
+            {
+              "visitor_question": "How can I contact the hospital?",
+              "answer_rule": "Provide only verified contact details."
+            },
+            {
+              "visitor_question": "Can you tell me what illness I have?",
+              "answer_rule": "Explain that the FAQ assistant cannot diagnose and advise contacting a qualified clinician."
+            },
+            {
+              "visitor_question": "I may be having a medical emergency. What should I do?",
+              "answer_rule": "Display the hospital-approved emergency instruction and verified contact details; do not attempt AI diagnosis."
+            }
+          ]
+        ]
+      },
+      {
+        "section_number": 9,
+        "section_title": "Chatbot Data Maintenance",
+        "heading": "9. Chatbot Data Maintenance",
+        "description": "",
+        "bullets": [
+          "A designated hospital staff member must approve the service directory and clinic timetable.",
+          "Record the date each schedule was last reviewed and who approved it.",
+          "Update the knowledge base whenever clinic days, hours, services, or contacts change.",
+          "Remove or archive superseded documents so old information cannot be retrieved.",
+          "Test common questions after every update.",
+          "Do not include patient records or confidential internal documents in the public FAQ knowledge base."
+        ],
+        "tables": []
+      },
+      {
+        "section_number": 10,
+        "section_title": "Approval Checklist Before Public Use",
+        "heading": "10. Approval Checklist Before Public Use",
+        "description": "",
+        "bullets": [
+          "Hospital name and services verified.",
+          "Every department and clinic day verified.",
+          "Clinic hours and holiday arrangements verified.",
+          "Address, phone numbers, email, and website tested.",
+          "Unknown-answer response approved.",
+          "Emergency response wording and contacts approved.",
+          "Privacy notice and data handling reviewed.",
+          "Hospital representative has tested and signed off the chatbot information."
+        ],
+        "tables": []
+      }
+    ]
+  }
+}
