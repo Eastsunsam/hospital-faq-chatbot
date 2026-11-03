@@ -4,12 +4,15 @@ Handles user conversational messages, performs guardrail checks, semantic knowle
 and connects to pretrained OpenAI models or local knowledge base fallback.
 """
 
+import logging
 from fastapi import APIRouter, HTTPException
 from app.config import settings
 from app.schemas import ChatRequest, ChatResponse, SourceReference
 from app.services.guardrails_service import guardrails_service
 from app.services.knowledge_service import knowledge_service
 from app.services.openai_service import openai_service
+
+logger = logging.getLogger("chat_router")
 
 router = APIRouter(prefix="/api", tags=["Chat"])
 
@@ -70,7 +73,9 @@ def chat(request: ChatRequest):
         for c in retrieved_chunks
     ]
 
-    # 3. If OpenAI API key is configured, use the pretrained LLM
+    openai_error_notice = None
+
+    # 3. If OpenAI API key is configured, attempt call to OpenAI model
     if settings.is_api_key_configured:
         history_dicts = [{"role": m.role, "content": m.content} for m in request.history]
         try:
@@ -88,28 +93,16 @@ def chat(request: ChatRequest):
                 sources=source_refs
             )
         except Exception as e:
-            # Fallback on OpenAI API error to local knowledge base
-            matched_faq = knowledge_service.match_faq(user_msg)
-            if matched_faq:
-                is_faq_disclaimer = (
-                    matched_faq.get("category") == "safety_disclaimer"
-                    or matched_faq.get("intent") == "medical_diagnosis_inquiry"
-                )
-                is_faq_emergency = (
-                    matched_faq.get("category") == "emergency"
-                    or matched_faq.get("intent") == "emergency_assistance"
-                )
-                return ChatResponse(
-                    reply=f"{matched_faq['approved_answer']}\n\n*(Note: Generated via local FAQ fallback because OpenAI returned: {str(e)})*",
-                    model="local-faq-fallback",
-                    source="faq_fallback",
-                    is_emergency=is_faq_emergency,
-                    is_medical_disclaimer=is_faq_disclaimer,
-                    sources=source_refs
-                )
-            raise HTTPException(status_code=502, detail=f"OpenAI service error: {str(e)}")
+            # Capture error details and gracefully fall back to local knowledge engine
+            # NEVER crash or raise 502 to the user!
+            err_str = str(e)
+            logger.warning(f"OpenAI service call failed: {err_str}")
+            if "no credits remaining" in err_str.lower() or "quota" in err_str.lower() or "429" in err_str:
+                openai_error_notice = "*(Note: Responding from verified local hospital records while OpenAI credit quota is updated.)*"
+            else:
+                openai_error_notice = "*(Note: Responding from verified local hospital records.)*"
 
-    # 4. Local Reference Mode (Grounded in hospital_service.json, no invented replies)
+    # 4. Local Knowledge Engine (Always active as fallback)
     # Check A: Exact or Curated FAQ Match
     matched_faq = knowledge_service.match_faq(user_msg)
     if matched_faq:
@@ -121,8 +114,11 @@ def chat(request: ChatRequest):
             matched_faq.get("category") == "emergency"
             or matched_faq.get("intent") == "emergency_assistance"
         )
+        reply_content = matched_faq["approved_answer"]
+        if openai_error_notice:
+            reply_content += f"\n\n{openai_error_notice}"
         return ChatResponse(
-            reply=matched_faq["approved_answer"],
+            reply=reply_content,
             model="local-rule-engine",
             source="curated_faq",
             is_emergency=is_faq_emergency,
@@ -134,6 +130,8 @@ def chat(request: ChatRequest):
     matched_units = knowledge_service.find_department_or_clinics(user_msg)
     if matched_units:
         reply_text = build_local_clinic_response(matched_units, user_msg)
+        if openai_error_notice:
+            reply_text += f"\n\n{openai_error_notice}"
         return ChatResponse(
             reply=reply_text,
             model="local-rule-engine",
@@ -142,11 +140,13 @@ def chat(request: ChatRequest):
         )
 
     # Check C: Strong TF-IDF Knowledge Retrieval Match
-    # Require a strong similarity score (> 0.35) so irrelevant queries don't trigger random chunks
     if retrieved_chunks and retrieved_chunks[0].get("relevance_score", 0) > 0.35:
         top_chunk = retrieved_chunks[0]
+        reply_text = f"**{top_chunk.get('title')}:**\n\n{top_chunk.get('content')}"
+        if openai_error_notice:
+            reply_text += f"\n\n{openai_error_notice}"
         return ChatResponse(
-            reply=f"**{top_chunk.get('title')}:**\n\n{top_chunk.get('content')}",
+            reply=reply_text,
             model="local-tfidf-retriever",
             source="knowledge_chunks",
             sources=source_refs
@@ -167,6 +167,8 @@ def chat(request: ChatRequest):
         f"- **Main Telephone:** {phone}\n"
         f"- **Email:** {email}"
     )
+    if openai_error_notice:
+        fallback_text += f"\n\n{openai_error_notice}"
 
     return ChatResponse(
         reply=fallback_text,

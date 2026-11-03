@@ -143,9 +143,18 @@ class KnowledgeService:
         using strict word boundaries to avoid false positives (e.g. 'here' matching 'er').
         """
         q_clean = query.lower().strip()
+        q_norm_id = q_clean.replace("-", "_").replace(" ", "_")
         matches = []
 
-        # 1. Check abbreviation table with strict word boundaries
+        # 1. Direct ID match first
+        for unit in self.get_all_clinics():
+            u_id = unit.get("id", "").lower()
+            if u_id == q_norm_id or u_id == q_clean:
+                matches.append(unit)
+        if matches:
+            return matches
+
+        # 2. Check abbreviation table with strict word boundaries
         target_name = None
         for abbr, mapped in ABBREVIATIONS.items():
             pattern = r"\b" + re.escape(abbr) + r"\b"
@@ -171,7 +180,7 @@ class KnowledgeService:
             if re.search(r"\b" + re.escape(u_dept) + r"\b", q_clean):
                 matches.append(unit)
                 continue
-            if re.search(r"\b" + re.escape(u_id.replace("_", " ")) + r"\b", q_clean):
+            if re.search(r"\b" + re.escape(u_id.replace("_", " ")) + r"\b", q_clean) or u_id in q_clean:
                 matches.append(unit)
                 continue
 
@@ -188,6 +197,10 @@ class KnowledgeService:
 
     def get_clinic_by_identifier(self, query: str) -> Optional[Dict[str, Any]]:
         """Finds a single clinic by ID, name, or alias."""
+        q_norm = query.lower().strip().replace("-", "_").replace(" ", "_")
+        for unit in self.get_all_clinics():
+            if unit.get("id", "").lower() == q_norm:
+                return unit
         clinics = self.find_department_or_clinics(query)
         return clinics[0] if clinics else None
 

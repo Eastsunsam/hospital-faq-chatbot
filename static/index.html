@@ -579,7 +579,12 @@
           appendMessage('bot', data.reply);
           chatHistory.push({ role: 'assistant', content: data.reply });
         } else {
-          appendMessage('bot', '⚠️ Error contacting the server. Please check the backend console.');
+          let detail = 'The server is temporarily unavailable.';
+          try {
+            const errData = await response.json();
+            if (errData && errData.detail) detail = errData.detail;
+          } catch(e) {}
+          appendMessage('bot', `⚠️ ${detail}`);
         }
       } catch (err) {
         removeTypingIndicator();
